@@ -1,7 +1,7 @@
 <!--
 name: 'Data: Claude API reference — Python'
 description: Python SDK reference including installation, client initialization, basic requests, thinking, and multi-turn conversation
-ccVersion: 2.1.128
+ccVersion: 2.1.154
 -->
 # Claude API — Python
 
@@ -16,10 +16,12 @@ pip install anthropic
 ```python
 import anthropic
 
-# Default (uses ANTHROPIC_API_KEY env var)
+# Default — resolves credentials from the environment:
+# ANTHROPIC_API_KEY, or ANTHROPIC_AUTH_TOKEN, or an `ant auth login` profile.
+# Prefer this for local dev; don't hardcode a key.
 client = anthropic.Anthropic()
 
-# Explicit API key
+# Explicit API key (only when you must inject a specific key)
 client = anthropic.Anthropic(api_key="your-api-key")
 
 # Async client
@@ -116,6 +118,23 @@ response = client.messages.create(
     max_tokens=16000,
     system="You are a helpful coding assistant. Always provide examples in Python.",
     messages=[{"role": "user", "content": "How do I read a JSON file?"}]
+)
+```
+
+### Mid-conversation system messages (beta, model-gated)
+
+For operator instructions that arrive mid-conversation (mode switches, injected state), append `{"role": "system", ...}` to `messages` instead of editing top-level `system` — this preserves the cached prefix and carries operator authority. Must follow a user message; cannot be `messages[0]`. Unsupported models return a 400 (`role 'system' is not supported on this model`). See `shared/prompt-caching.md` for when to use this vs. top-level `system`.
+
+```python
+response = client.messages.create(
+    model=MODEL_ID,  # must support mid-conversation system messages
+    max_tokens=16000,
+    system=[{"type": "text", "text": STABLE_SYSTEM, "cache_control": {"type": "ephemeral"}}],
+    messages=history + [
+        {"role": "user", "content": user_message},
+        {"role": "system", "content": "Terse mode enabled — keep responses under 40 words."},
+    ],
+    extra_headers={"anthropic-beta": "mid-conversation-system-2026-04-07"},
 )
 ```
 
@@ -236,11 +255,11 @@ If `cache_read_input_tokens` is zero across repeated identical-prefix requests, 
 
 ## Extended Thinking
 
-> **Opus 4.7, Opus 4.6, and Sonnet 4.6:** Use adaptive thinking. `budget_tokens` is removed on Opus 4.7 (400 if sent); deprecated on Opus 4.6 and Sonnet 4.6.
+> **Opus 4.8, Opus 4.7, Opus 4.6, and Sonnet 4.6:** Use adaptive thinking. `budget_tokens` is removed on Opus 4.8 and 4.7 (400 if sent); deprecated on Opus 4.6 and Sonnet 4.6.
 > **Older models:** Use `thinking: {type: "enabled", budget_tokens: N}` (must be < `max_tokens`, min 1024).
 
 ```python
-# Opus 4.7 / 4.6: adaptive thinking (recommended)
+# Opus 4.8 / 4.7 / 4.6: adaptive thinking (recommended)
 response = client.messages.create(
     model="{{OPUS_ID}}",
     max_tokens=16000,
@@ -359,14 +378,15 @@ response2 = conversation.send("What's my name?")  # Claude remembers "Alice"
 
 **Rules:**
 
-- Messages must alternate between `user` and `assistant`
+- Consecutive same-role messages are allowed — the API combines them into a single turn
 - First message must be `user`
+- `role: "system"` messages are allowed mid-conversation under the `mid-conversation-system-2026-04-07` beta on supporting models — see § Mid-conversation system messages above
 
 ---
 
 ### Compaction (long conversations)
 
-> **Beta, Opus 4.7, Opus 4.6, and Sonnet 4.6.** When conversations approach the 200K context window, compaction automatically summarizes earlier context server-side. The API returns a `compaction` block; you must pass it back on subsequent requests — append `response.content`, not just the text.
+> **Beta, Opus 4.8, Opus 4.7, Opus 4.6, and Sonnet 4.6.** When conversations approach the 200K context window, compaction automatically summarizes earlier context server-side. The API returns a `compaction` block; you must pass it back on subsequent requests — append `response.content`, not just the text.
 
 ```python
 import anthropic

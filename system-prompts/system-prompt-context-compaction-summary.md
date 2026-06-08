@@ -12,7 +12,7 @@ agentMetadata:
     integrations, keyboard shortcuts; (2) Claude Agent SDK - building custom agents; (3) Claude API
     (formerly Anthropic API) - API usage, tool use, Anthropic SDK usage. **IMPORTANT:** Before spawning
     a new agent, check if there is already a running or recently completed claude-code-guide agent that
-    you can continue via ${P2}.
+    you can continue via ${SEND_MESSAGE_TOOL_NAME}.
 -->
 You have been working on the task described above but have not yet completed it. Write a continuation summary that will allow you (or another instance of yourself) to resume work efficiently in a future context window where the conversation history will be replaced with this summary. Your summary should be structured, concise, and actionable. Include:
 1. Task Overview

@@ -1,7 +1,7 @@
 <!--
 name: 'Data: HTTP error codes reference'
 description: Reference for HTTP error codes returned by the Claude API with common causes and handling strategies
-ccVersion: 2.1.128
+ccVersion: 2.1.154
 -->
 # HTTP Error Codes Reference
 
@@ -60,8 +60,10 @@ This file documents HTTP error codes returned by the Claude API, their common ca
 - Missing `x-api-key` header or `Authorization` header
 - Invalid API key format
 - Revoked or deleted API key
+- OAuth bearer token sent via `x-api-key` instead of `Authorization: Bearer`
+- Both `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` set — the SDK sends both headers and the API rejects the request
 
-**Fix:** Ensure `ANTHROPIC_API_KEY` environment variable is set correctly.
+**Fix:** Set `ANTHROPIC_API_KEY`, or run `ant auth login` and leave the client constructor empty. For raw HTTP with an OAuth token, use `Authorization: Bearer <token>` (not `x-api-key:`).
 
 ---
 
@@ -110,7 +112,7 @@ Some 400 errors are specifically related to parameter validation:
 - `budget_tokens` >= `max_tokens` in extended thinking
 - Invalid tool definition schema
 
-**Model-specific 400s on Opus 4.7:**
+**Model-specific 400s on Opus 4.8 / 4.7:**
 
 - `temperature`, `top_p`, `top_k` are removed — sending any of them returns 400. Delete the parameter; see `shared/model-migration.md` → Per-SDK Syntax Reference.
 - `thinking: {type: "enabled", budget_tokens: N}` is removed — sending it returns 400. Use `thinking: {type: "adaptive"}` instead.
@@ -171,8 +173,8 @@ thinking: budget_tokens=10000, max_tokens=16000
 
 | Mistake                         | Error            | Fix                                                     |
 | ------------------------------- | ---------------- | ------------------------------------------------------- |
-| `temperature`/`top_p`/`top_k` on Opus 4.7 | 400    | Remove the parameter (see `shared/model-migration.md`)  |
-| `budget_tokens` on Opus 4.7     | 400              | Use `thinking: {type: "adaptive"}`                      |
+| `temperature`/`top_p`/`top_k` on Opus 4.8 / 4.7 | 400 | Remove the parameter (see `shared/model-migration.md`)  |
+| `budget_tokens` on Opus 4.8 / 4.7 | 400            | Use `thinking: {type: "adaptive"}`                      |
 | `budget_tokens` >= `max_tokens` (older models) | 400 | Ensure `budget_tokens` < `max_tokens`                  |
 | Typo in model ID                | 404              | Use valid model ID like `{{OPUS_ID}}`               |
 | First message is `assistant`    | 400              | First message must be `user`                            |

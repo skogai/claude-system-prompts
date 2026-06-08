@@ -1,7 +1,7 @@
 <!--
 name: 'Data: Managed Agents reference — TypeScript'
 description: Reference guide for using the Anthropic TypeScript SDK to create and manage agents, sessions, environments, streaming, custom tools, file uploads, and MCP server integration
-ccVersion: 2.1.128
+ccVersion: 2.1.154
 -->
 # Managed Agents — TypeScript
 
@@ -20,10 +20,12 @@ npm install @anthropic-ai/sdk
 ```typescript
 import Anthropic from "@anthropic-ai/sdk";
 
-// Default (uses ANTHROPIC_API_KEY env var)
+// Default — resolves credentials from the environment:
+// ANTHROPIC_API_KEY, or ANTHROPIC_AUTH_TOKEN, or an `ant auth login` profile.
+// Prefer this for local dev; don't hardcode a key.
 const client = new Anthropic();
 
-// Explicit API key
+// Explicit API key (only when you must inject a specific key)
 const client = new Anthropic({ apiKey: "your-api-key" });
 ```
 

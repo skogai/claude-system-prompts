@@ -1,7 +1,7 @@
 <!--
 name: 'Data: Claude API reference — Java'
 description: Java SDK reference including installation, client initialization, basic requests, streaming, and beta tool use
-ccVersion: 2.1.128
+ccVersion: 2.1.152
 -->
 # Claude API — Java
 
@@ -15,14 +15,14 @@ Maven:
 <dependency>
     <groupId>com.anthropic</groupId>
     <artifactId>anthropic-java</artifactId>
-    <version>2.27.0</version>
+    <version>2.34.0</version>
 </dependency>
 ```
 
 Gradle:
 
 ```groovy
-implementation("com.anthropic:anthropic-java:2.27.0")
+implementation("com.anthropic:anthropic-java:2.34.0")
 ```
 
 ## Client Initialization

@@ -1,7 +1,7 @@
 <!--
 name: 'Data: Claude API reference — Go'
 description: Go SDK reference
-ccVersion: 2.1.128
+ccVersion: 2.1.154
 -->
 # Claude API — Go
 
@@ -34,7 +34,7 @@ client := anthropic.NewClient(
 
 ## Model Constants
 
-The Go SDK provides typed model constants: `anthropic.ModelClaudeOpus4_7`, `anthropic.ModelClaudeOpus4_6`, `anthropic.ModelClaudeSonnet4_6`, `anthropic.ModelClaudeHaiku4_5_20251001`. Use `ModelClaudeOpus4_7` unless the user specifies otherwise.
+The Go SDK provides typed model constants: `anthropic.ModelClaudeOpus4_8`, `anthropic.ModelClaudeOpus4_7`, `anthropic.ModelClaudeSonnet4_6`, `anthropic.ModelClaudeHaiku4_5_20251001`. Use `ModelClaudeOpus4_8` unless the user specifies otherwise.
 
 ---
 
@@ -42,7 +42,7 @@ The Go SDK provides typed model constants: `anthropic.ModelClaudeOpus4_7`, `anth
 
 ```go
 response, err := client.Messages.New(context.Background(), anthropic.MessageNewParams{
-    Model:     anthropic.ModelClaudeOpus4_7,
+    Model:     anthropic.ModelClaudeOpus4_8,
     MaxTokens: 16000,
     Messages: []anthropic.MessageParam{
         anthropic.NewUserMessage(anthropic.NewTextBlock("What is the capital of France?")),

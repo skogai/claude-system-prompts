@@ -1,7 +1,7 @@
 <!--
 name: 'Data: Anthropic CLI'
 description: Reference documentation for the ant CLI covering installation, authentication, command structure, input and output shaping, managed agents workflows, and scripting patterns
-ccVersion: 2.1.118
+ccVersion: 2.1.154
 -->
 # Anthropic CLI (`ant`)
 
@@ -33,7 +33,28 @@ curl -fsSL "https://github.com/anthropics/anthropic-cli/releases/download/v${VER
 go install github.com/anthropics/anthropic-cli/cmd/ant@latest
 ```
 
-Auth is `ANTHROPIC_API_KEY` from the environment. Override the host with `ANTHROPIC_BASE_URL` or `--base-url`.
+**Auth** — the CLI resolves credentials the same way the SDKs do (first match wins): explicit flags, then `ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` env vars, then `ANTHROPIC_PROFILE`, then the active profile from `ant auth login`. Override the host with `ANTHROPIC_BASE_URL` or `--base-url`.
+
+- **API key**: set `ANTHROPIC_API_KEY` in the environment.
+- **OAuth profile** (no static key to manage): `ant auth login` opens a browser, exchanges for a short-lived token, and stores a profile under `~/.config/anthropic/`. Subsequent `ant` (and SDK) calls pick it up automatically. `ant auth status` shows the active profile; `ant auth logout` clears it.
+
+To hand the active credential to a subprocess or raw-HTTP script:
+
+```sh
+# Bare access token — for curl's Authorization header
+curl https://api.anthropic.com/v1/messages \
+  -H "Authorization: Bearer $(ant auth print-credentials --access-token)" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "content-type: application/json" \
+  -d '{"model": "{{OPUS_ID}}", "max_tokens": 1024, "messages": [{"role": "user", "content": "Hello"}]}'
+
+# .env format — sets ANTHROPIC_AUTH_TOKEN (and ANTHROPIC_BASE_URL if the profile has one).
+# Output is bare KEY=value (no `export`), so use `set -a` to auto-export for child processes:
+set -a; eval "$(ant auth print-credentials --env)"; set +a
+python my_script.py   # SDK picks up ANTHROPIC_AUTH_TOKEN
+```
+
+OAuth tokens go on `Authorization: Bearer` (not `x-api-key:`). The token is short-lived and not auto-refreshed when passed via env var, so re-run `print-credentials` before it expires for long-running scripts. If both `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` are set, the SDKs send both and the API rejects the request — unset `ANTHROPIC_API_KEY` before `eval`ing the `--env` output.
 
 ## Command structure
 
@@ -41,7 +62,7 @@ Auth is `ANTHROPIC_API_KEY` from the environment. Override the host with `ANTHRO
 ant <resource>[:<subresource>] <action> [flags]
 ```
 
-Beta resources (agents, sessions, environments, deployments, skills, vaults, memory stores) live under `beta:` — the CLI auto-sends the right `anthropic-beta` header, so don't pass it yourself unless overriding with `--beta <header>`.
+Beta resources (agents, sessions, environments, deployments, skills, vaults, memory stores) live under `beta:` — the CLI auto-sends the right `anthropic-beta` header, so don't pass it yourself unless overriding with `--beta <header>`. For self-hosted environments, `ant beta:worker poll/run` and `ant beta:environments:work stats/stop` drive and monitor the work queue — see `shared/managed-agents-self-hosted-sandboxes.md`.
 
 ```sh
 ant models list

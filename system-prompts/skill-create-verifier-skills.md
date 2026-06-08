@@ -1,9 +1,13 @@
 <!--
 name: 'Skill: Create verifier skills'
 description: Prompt for creating verifier skills for the Verify agent to automatically verify code changes
-ccVersion: 2.1.108
+ccVersion: 2.1.142
+variables:
+  - ENABLE_TASKS_FEATURE
+  - TASKCREATE_TOOL_NAME
+  - TODOWRITE_TOOL_NAME
 -->
-Use the TodoWrite tool to track your progress through this multi-step task.
+Use the ${ENABLE_TASKS_FEATURE()?TASKCREATE_TOOL_NAME:TODOWRITE_TOOL_NAME} tool to track your progress through this multi-step task.
 
 ## Goal
 

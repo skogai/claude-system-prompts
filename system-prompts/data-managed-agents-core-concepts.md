@@ -1,7 +1,7 @@
 <!--
 name: 'Data: Managed Agents core concepts'
 description: Reference documentation for the Managed Agents API covering core concepts (Agents, Sessions, Environments, Containers), lifecycle, versioning, endpoints, and usage patterns
-ccVersion: 2.1.119
+ccVersion: 2.1.145
 -->
 # Managed Agents — Core Concepts
 
@@ -127,6 +127,8 @@ const session = await client.beta.sessions.create(
 );
 ```
 
+> 💡 **Watch it live in Console.** While developing, print a link so you can click through to the session UI instead of parsing the event stream: `https://platform.claude.com/workspaces/{workspace}/sessions/{session.id}`. Use `default` for the workspace slug unless you created the session in a non-default workspace; the sessions list for your workspace is at `https://platform.claude.com/workspaces/default/sessions`. Include this `print`/`console.log` in code you generate for users who are iterating locally.
+
 **Session creation parameters:**
 
 | Field           | Type     | Required | Description                                    |
@@ -147,8 +149,9 @@ const session = await client.beta.sessions.create(
 | `system`      | string   | No       | System prompt — defines the agent's behavior (up to 100K chars) |
 | `tools`       | array    | No       | Encompasses three kinds: (1) pre-built Claude Agent tools (`agent_toolset_20260401`), (2) MCP tools (`mcp_toolset`), and (3) custom client-side tools. Max 128. |
 | `mcp_servers` | array    | No       | MCP server connections — standardized third-party capabilities (e.g. GitHub, Asana). Max 20, unique names. See `shared/managed-agents-tools.md` → MCP Servers. |
-| `skills`      | array    | No       | Customized "best-practices" context with progressive disclosure. Max 64. See `shared/managed-agents-tools.md` → Skills. |
+| `skills`      | array    | No       | Customized "best-practices" context with progressive disclosure. Max 20. See `shared/managed-agents-tools.md` → Skills. |
 | `description` | string   | No       | Description of the agent (up to 2048 chars)    |
+| `multiagent`  | object   | No       | `{type: "coordinator", agents: [...]}` — roster this agent may delegate to. See `shared/managed-agents-multiagent.md`. |
 | `metadata`    | object   | No       | Arbitrary key-value pairs (max 16, keys ≤64 chars, values ≤512 chars) |
 
 ---
@@ -168,8 +171,9 @@ The API is **flat** — `model`, `system`, `tools` etc. are top-level fields, no
 | `system`           | string   | No       | System prompt                                      |
 | `tools`            | array    | No       | Agent toolset / MCP toolset / custom tools         |
 | `mcp_servers`      | array    | No       | MCP server connections                             |
-| `skills`           | array    | No       | Skill references (max 64)                          |
+| `skills`           | array    | No       | Skill references (max 20)                          |
 | `description`      | string   | No       | Description of the agent                           |
+| `multiagent`       | object   | No       | Coordinator roster — see `shared/managed-agents-multiagent.md` |
 | `metadata`         | object   | No       | Arbitrary key-value pairs                          |
 
 ### Lifecycle: create once, run many, update in place
@@ -230,6 +234,24 @@ session = client.beta.sessions.create(
 session = client.beta.sessions.create(
     agent={"type": "agent", "id": agent.id, "version": agent.version},
     environment_id=environment_id,
+)
+```
+
+### Updating the agent configuration mid-session
+
+`sessions.update()` can change `agent.tools`, `agent.mcp_servers` (including permission policies), and `vault_ids` on an **existing** session. This is a **session-local override** — it does not create a new agent version and does not propagate back to the agent object. The provided arrays are **full replacements**; to append one tool, `GET` the session, modify, and `POST` back. The session must be `idle` — interrupt first if running.
+
+```python
+client.beta.sessions.update(
+    session.id,
+    agent={
+        "tools": [
+            {"type": "agent_toolset_20260401"},
+            {"type": "mcp_toolset", "mcp_server_name": "linear"},
+        ],
+        "mcp_servers": [{"type": "url", "name": "linear", "url": "https://mcp.linear.app/sse"}],
+    },
+    vault_ids=["vlt_..."],
 )
 ```
 
